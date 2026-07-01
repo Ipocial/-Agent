@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { FundInfo, FundNAV, FinalReport, AgentProgress as AgentProgressType, LLMModel } from '../types';
 import { AVAILABLE_MODELS } from '../types';
 import { getFundNav, runAnalysis } from '../services/api';
@@ -22,7 +23,6 @@ export default function Dashboard({ onFundDetail }: DashboardProps) {
   const [report, setReport] = useState<FinalReport | null>(null);
   const [error, setError] = useState<string>('');
 
-  // 选中基金后加载净值数据
   useEffect(() => {
     if (selectedFund) {
       loadNavData(selectedFund.code);
@@ -57,94 +57,117 @@ export default function Dashboard({ onFundDetail }: DashboardProps) {
       setReport(result.report);
       setProgressList(result.progress_log);
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || '分析失败，请检查后端服务和API Key配置');
+      setError(err.response?.data?.detail || err.message || '分析失败，请检查后端服务和 API Key 配置');
     } finally {
       setAnalyzing(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-25">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">
-              基金购买建议 <span className="text-blue-600">Multi-Agent</span>
-            </h1>
-            <ModelSelector selected={selectedModel} onChange={setSelectedModel} />
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-100">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M2 12L6 4L10 9L14 2" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <span className="font-semibold text-stone-800 text-lg tracking-tight">FundAdvisor</span>
           </div>
+          <ModelSelector selected={selectedModel} onChange={setSelectedModel} />
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* 搜索区 */}
-        <div className="flex items-center gap-4 mb-8">
-          <FundSearch onSelect={setSelectedFund} />
-          {selectedFund && (
-            <div className="flex gap-3">
-              <button
-                onClick={handleAnalyze}
-                disabled={analyzing}
-                className={`px-6 py-3 rounded-lg font-medium text-white transition-all ${
-                  analyzing
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200'
-                }`}
-              >
-                {analyzing ? '分析中...' : 'AI 分析建议'}
-              </button>
-              {onFundDetail && (
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        {/* Search Hero */}
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-8"
+        >
+          <h1 className="text-2xl font-semibold text-stone-800 tracking-tight mb-1">基金智能分析</h1>
+          <p className="text-sm text-stone-400 mb-6">
+            搜索基金，Multi-Agent 系统将从技术面、消息面、风险维度综合分析并给出建议
+          </p>
+          <div className="flex items-stretch gap-3">
+            <FundSearch onSelect={setSelectedFund} />
+            {selectedFund && (
+              <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }} className="flex gap-2">
                 <button
-                  onClick={() => onFundDetail(selectedFund.code)}
-                  className="px-6 py-3 rounded-lg font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 transition-all"
+                  onClick={handleAnalyze}
+                  disabled={analyzing}
+                  className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-smooth whitespace-nowrap ${
+                    analyzing ? 'bg-stone-100 text-stone-400 cursor-not-allowed' : 'bg-brand-600 text-white hover:bg-brand-700 shadow-sm'
+                  }`}
                 >
-                  详情页面
+                  {analyzing ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />分析中
+                    </span>
+                  ) : '启动 AI 分析'}
                 </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* 基金信息 */}
-        {selectedFund && (
-          <div className="mb-6 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-4">
-              <span className="text-2xl font-mono text-blue-600">{selectedFund.code}</span>
-              <span className="text-lg font-medium text-gray-800">{selectedFund.name}</span>
-              {selectedFund.type && (
-                <span className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded">{selectedFund.type}</span>
-              )}
-            </div>
+                {onFundDetail && (
+                  <button
+                    onClick={() => onFundDetail(selectedFund.code)}
+                    className="px-5 py-2.5 rounded-lg text-sm font-medium text-stone-600 border border-stone-200 hover:bg-stone-50 hover:border-stone-300 transition-smooth whitespace-nowrap"
+                  >
+                    查看详情
+                  </button>
+                )}
+              </motion.div>
+            )}
           </div>
-        )}
+        </motion.section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 左侧：图表 + 分析结果 */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* 净值走势图 */}
-            {navHistory.length > 0 && (
-              <FundChart navHistory={navHistory} fundName={selectedFund?.name || ''} />
-            )}
-
-            {/* Agent进度 */}
-            {(analyzing || progressList.length > 0) && (
-              <AgentProgress progressList={progressList} />
-            )}
-
-            {/* 错误提示 */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <p className="text-red-700">{error}</p>
+        {/* Fund Info Bar */}
+        <AnimatePresence>
+          {selectedFund && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden mb-6">
+              <div className="bg-white rounded-xl px-5 py-4 border border-stone-100 shadow-xs flex items-center gap-4">
+                <span className="font-mono text-brand-600 text-lg font-semibold">{selectedFund.code}</span>
+                <div className="h-5 w-px bg-stone-200" />
+                <span className="text-stone-700 font-medium">{selectedFund.name}</span>
+                {selectedFund.type && (
+                  <>
+                    <div className="h-5 w-px bg-stone-200" />
+                    <span className="px-2 py-0.5 bg-brand-50 text-brand-700 text-xs font-medium rounded-md">{selectedFund.type}</span>
+                  </>
+                )}
               </div>
-            )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            {/* 最终建议 */}
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            {navHistory.length > 0 && <FundChart navHistory={navHistory} fundName={selectedFund?.name || ''} />}
+
+            <AnimatePresence>
+              {(analyzing || progressList.length > 0) && (
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
+                  <AgentProgress progressList={progressList} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {error && (
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-start gap-3">
+                  <svg className="w-5 h-5 text-red-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <p className="text-sm text-red-700 leading-relaxed">{error}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {report && <RecommendCard report={report} />}
           </div>
 
-          {/* 右侧：新闻面板 */}
           <div className="space-y-6">
             <NewsPanel />
           </div>

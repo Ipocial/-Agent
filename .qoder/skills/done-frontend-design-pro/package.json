@@ -1,0 +1,1 @@
+{"name":"done-frontend-design-pro","version":"1.0.3","description":"前端设计质量提升工具。让 AI 生成的 UI/前端代码更专业，避免常见设计反模式。 参考 impeccable 项目的设计语言规范，提供审查、优化、批评等设计审查能力。 触发词：/audit /polish /critique /colorize /animate /bolder /quieter /distill 以及：审查UI设计、优化界面、前端设计建议、让设计更好看、检查设计质量","publishConfig":{"registry":"https://contextlab.alibaba-inc.com/skill"}}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { FundInfo, FundNAV, FinalReport, AgentProgress as AgentProgressType, LLMModel } from '../types';
 import { AVAILABLE_MODELS } from '../types';
 import { getFundNav, getFundInfo, runAnalysis } from '../services/api';
@@ -22,21 +23,16 @@ export default function FundDetail({ fundCode, onBack }: Props) {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadFundData();
-  }, [fundCode]);
+  useEffect(() => { loadFundData(); }, [fundCode]);
 
   const loadFundData = async () => {
     setLoading(true);
     try {
-      const [info, nav] = await Promise.all([
-        getFundInfo(fundCode),
-        getFundNav(fundCode, 90),
-      ]);
+      const [info, nav] = await Promise.all([getFundInfo(fundCode), getFundNav(fundCode, 90)]);
       setFundInfo(info);
       setNavHistory(nav);
     } catch {
-      setError('加载基金数据失败');
+      setError('加载基金数据失败，请检查网络连接后重试');
     } finally {
       setLoading(false);
     }
@@ -47,7 +43,6 @@ export default function FundDetail({ fundCode, onBack }: Props) {
     setReport(null);
     setProgressList([]);
     setError('');
-
     try {
       const result = await runAnalysis({
         fund_code: fundCode,
@@ -57,7 +52,7 @@ export default function FundDetail({ fundCode, onBack }: Props) {
       setReport(result.report);
       setProgressList(result.progress_log);
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || '分析失败');
+      setError(err.response?.data?.detail || err.message || '分析失败，请检查后端服务和 API Key 配置');
     } finally {
       setAnalyzing(false);
     }
@@ -65,107 +60,104 @@ export default function FundDetail({ fundCode, onBack }: Props) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-stone-25 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-brand-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-stone-400">加载基金数据...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {onBack && (
-                <button
-                  onClick={onBack}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  &larr; 返回
-                </button>
-              )}
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  <span className="font-mono text-blue-600">{fundCode}</span>
-                  {' '}
-                  {fundInfo?.name}
-                </h1>
-                {fundInfo?.type && (
-                  <span className="text-sm text-gray-500">{fundInfo.type}</span>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <ModelSelector selected={selectedModel} onChange={setSelectedModel} />
-              <button
-                onClick={handleAnalyze}
-                disabled={analyzing}
-                className={`px-6 py-2 rounded-lg font-medium text-white transition-all ${
-                  analyzing
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200'
-                }`}
-              >
-                {analyzing ? '分析中...' : 'AI 分析建议'}
+    <div className="min-h-screen bg-stone-25">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-100">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {onBack && (
+              <button onClick={onBack} className="p-1.5 -ml-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-50 transition-smooth">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
               </button>
+            )}
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-brand-600 text-base font-semibold">{fundCode}</span>
+              <span className="text-stone-700 font-medium text-base">{fundInfo?.name}</span>
+              {fundInfo?.type && (
+                <span className="px-1.5 py-0.5 bg-brand-50 text-brand-700 text-xs font-medium rounded-md">{fundInfo.type}</span>
+              )}
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <ModelSelector selected={selectedModel} onChange={setSelectedModel} />
+            <button
+              onClick={handleAnalyze}
+              disabled={analyzing}
+              className={`px-5 py-2 rounded-lg text-sm font-medium transition-smooth ${
+                analyzing ? 'bg-stone-100 text-stone-400 cursor-not-allowed' : 'bg-brand-600 text-white hover:bg-brand-700 shadow-sm'
+              }`}
+            >
+              {analyzing ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />分析中
+                </span>
+              ) : '启动 AI 分析'}
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">
-        {/* 基金基本信息 */}
+      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
         {fundInfo && (
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <span className="text-sm text-gray-500">基金代码</span>
-                <p className="font-mono text-lg text-blue-600">{fundInfo.code}</p>
-              </div>
-              <div>
-                <span className="text-sm text-gray-500">基金类型</span>
-                <p className="text-gray-800">{fundInfo.type || '未知'}</p>
-              </div>
-              <div>
-                <span className="text-sm text-gray-500">基金经理</span>
-                <p className="text-gray-800">{fundInfo.manager || '未知'}</p>
-              </div>
-              <div>
-                <span className="text-sm text-gray-500">基金规模</span>
-                <p className="text-gray-800">{fundInfo.size || '未知'}</p>
-              </div>
+          <div className="bg-white rounded-xl border border-stone-100 shadow-xs overflow-hidden">
+            <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-stone-50">
+              {[
+                { label: '基金代码', value: fundInfo.code, mono: true, accent: true },
+                { label: '基金类型', value: fundInfo.type || '未知' },
+                { label: '基金经理', value: fundInfo.manager || '未知' },
+                { label: '基金规模', value: fundInfo.size || '未知' },
+              ].map((item) => (
+                <div key={item.label} className="px-5 py-4">
+                  <span className="text-xs text-stone-400 block mb-1">{item.label}</span>
+                  <p className={`text-sm font-medium ${item.mono ? 'font-mono' : ''} ${item.accent ? 'text-brand-600' : 'text-stone-800'}`}>{item.value}</p>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* 净值走势图 */}
-        {navHistory.length > 0 && (
-          <FundChart navHistory={navHistory} fundName={fundInfo?.name || ''} />
-        )}
+        {navHistory.length > 0 && <FundChart navHistory={navHistory} fundName={fundInfo?.name || ''} />}
 
-        {/* Multi-Agent 分析面板 */}
-        {(analyzing || progressList.length > 0) && (
-          <AgentProgress progressList={progressList} />
-        )}
+        <AnimatePresence>
+          {(analyzing || progressList.length > 0) && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
+              <AgentProgress progressList={progressList} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* 错误提示 */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-start gap-3">
+              <svg className="w-5 h-5 text-red-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div>
+                <p className="text-sm text-red-700 leading-relaxed">{error}</p>
+                {!error.includes('API Key') && (
+                  <button onClick={loadFundData} className="mt-1 text-xs text-red-500 hover:text-red-700 font-medium transition-smooth">点击重试</button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* 最终决策建议 */}
         {report && <RecommendCard report={report} />}
 
-        {/* 免责声明 */}
-        <div className="bg-gray-100 rounded-xl p-4 text-center">
-          <p className="text-xs text-gray-500">
+        <div className="text-center py-4">
+          <p className="text-[11px] text-stone-400 leading-relaxed max-w-lg mx-auto">
             本系统提供的分析和建议仅供参考，不构成任何投资建议。投资有风险，入市需谨慎。
-            请根据自身风险承受能力和投资目标做出独立判断。
           </p>
         </div>
       </main>
