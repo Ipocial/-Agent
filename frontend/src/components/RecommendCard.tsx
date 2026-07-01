@@ -36,7 +36,7 @@ export default function RecommendCard({ report }: Props) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="bg-white rounded-xl border border-stone-100 shadow-xs overflow-hidden"
+      className="card"
     >
       {/* Rating header */}
       <div className="px-5 py-5 border-b border-stone-50">

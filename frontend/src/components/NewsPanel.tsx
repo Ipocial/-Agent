@@ -13,7 +13,7 @@ export default function NewsPanel() {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-stone-100 shadow-xs overflow-hidden">
+    <div className="card">
       <div className="px-5 py-4 border-b border-stone-50">
         <h3 className="text-sm font-semibold text-stone-700">财经热点</h3>
       </div>

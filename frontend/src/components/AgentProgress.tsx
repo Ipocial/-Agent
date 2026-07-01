@@ -56,7 +56,7 @@ export default function AgentProgress({ progressList }: Props) {
   if (agents.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-stone-100 shadow-xs overflow-hidden">
+    <div className="card">
       <div className="px-5 py-4 border-b border-stone-50">
         <h3 className="text-sm font-semibold text-stone-700">Agent 执行进度</h3>
       </div>

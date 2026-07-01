@@ -88,12 +88,12 @@ export default function Dashboard({ onFundDetail }: DashboardProps) {
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="mb-8"
         >
-          <h1 className="text-2xl font-semibold text-stone-800 tracking-tight mb-1">基金智能分析</h1>
-          <p className="text-sm text-stone-400 mb-6">
+          <h1 className="text-2xl font-semibold text-stone-800 tracking-tight mb-3">基金智能分析</h1>
+          <p className="text-[13px] text-gray-500 mb-8">
             搜索基金，Multi-Agent 系统将从技术面、消息面、风险维度综合分析并给出建议
           </p>
           <div className="flex items-stretch gap-3">
-            <FundSearch onSelect={setSelectedFund} />
+            <FundSearch onSelect={setSelectedFund} selectedFund={selectedFund} onClear={() => { setSelectedFund(null); setNavHistory([]); setReport(null); }} />
             {selectedFund && (
               <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }} className="flex gap-2">
                 <button
@@ -126,14 +126,14 @@ export default function Dashboard({ onFundDetail }: DashboardProps) {
         <AnimatePresence>
           {selectedFund && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden mb-6">
-              <div className="bg-white rounded-xl px-5 py-4 border border-stone-100 shadow-xs flex items-center gap-4">
-                <span className="font-mono text-brand-600 text-lg font-semibold">{selectedFund.code}</span>
+              <div className="card px-5 py-4 flex items-center gap-4">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-50 text-brand-700 rounded-md font-mono text-base font-semibold">{selectedFund.code}</span>
                 <div className="h-5 w-px bg-stone-200" />
                 <span className="text-stone-700 font-medium">{selectedFund.name}</span>
                 {selectedFund.type && (
                   <>
                     <div className="h-5 w-px bg-stone-200" />
-                    <span className="px-2 py-0.5 bg-brand-50 text-brand-700 text-xs font-medium rounded-md">{selectedFund.type}</span>
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-md">{selectedFund.type}</span>
                   </>
                 )}
               </div>

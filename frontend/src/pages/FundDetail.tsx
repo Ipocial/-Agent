@@ -28,7 +28,7 @@ export default function FundDetail({ fundCode, onBack }: Props) {
   const loadFundData = async () => {
     setLoading(true);
     try {
-      const [info, nav] = await Promise.all([getFundInfo(fundCode), getFundNav(fundCode, 90)]);
+      const [info, nav] = await Promise.all([getFundInfo(fundCode), getFundNav(fundCode, 180)]);
       setFundInfo(info);
       setNavHistory(nav);
     } catch {
@@ -85,7 +85,7 @@ export default function FundDetail({ fundCode, onBack }: Props) {
               <span className="font-mono text-brand-600 text-base font-semibold">{fundCode}</span>
               <span className="text-stone-700 font-medium text-base">{fundInfo?.name}</span>
               {fundInfo?.type && (
-                <span className="px-1.5 py-0.5 bg-brand-50 text-brand-700 text-xs font-medium rounded-md">{fundInfo.type}</span>
+                <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-md">{fundInfo.type}</span>
               )}
             </div>
           </div>
@@ -110,17 +110,17 @@ export default function FundDetail({ fundCode, onBack }: Props) {
 
       <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
         {fundInfo && (
-          <div className="bg-white rounded-xl border border-stone-100 shadow-xs overflow-hidden">
-            <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-stone-50">
+          <div className="card">
+            <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-stone-100">
               {[
-                { label: '基金代码', value: fundInfo.code, mono: true, accent: true },
+                { label: '基金代码', value: fundInfo.code, mono: true, accent: true, badge: true },
                 { label: '基金类型', value: fundInfo.type || '未知' },
                 { label: '基金经理', value: fundInfo.manager || '未知' },
                 { label: '基金规模', value: fundInfo.size || '未知' },
               ].map((item) => (
                 <div key={item.label} className="px-5 py-4">
                   <span className="text-xs text-stone-400 block mb-1">{item.label}</span>
-                  <p className={`text-sm font-medium ${item.mono ? 'font-mono' : ''} ${item.accent ? 'text-brand-600' : 'text-stone-800'}`}>{item.value}</p>
+                  <p className={`text-sm font-medium ${item.mono ? 'font-mono' : ''} ${item.accent ? 'text-brand-600' : 'text-stone-800'}`}>{item.badge ? <span className="px-2 py-0.5 bg-brand-50 text-brand-700 rounded-md">{item.value}</span> : item.value}</p>
                 </div>
               ))}
             </div>
