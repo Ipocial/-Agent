@@ -34,7 +34,7 @@ export default function Dashboard({ onFundDetail }: DashboardProps) {
 
   const loadNavData = async (code: string) => {
     try {
-      const data = await getFundNav(code, 90);
+      const data = await getFundNav(code, 180);
       setNavHistory(data);
     } catch {
       setNavHistory([]);
