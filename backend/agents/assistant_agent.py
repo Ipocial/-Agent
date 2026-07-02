@@ -1,12 +1,14 @@
 """ReAct Agent 助理 - 基于 OpenAI function calling 的多步推理"""
 import json
-from typing import List, Dict, AsyncGenerator
+from typing import List, Dict, AsyncGenerator, Optional
 
 from openai import AsyncOpenAI
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings, LLMConfig
 from agents.assistant_tools import TOOLS_SCHEMA, execute_tool
+from models.db_models import UserApiKey
 
 MAX_ITERATIONS = 8
 
@@ -29,19 +31,36 @@ SYSTEM_PROMPT = """你是一个专业的基金投资助理，名叫"小基"。�
 class AssistantAgent:
     """ReAct 风格的助理 Agent"""
 
-    def __init__(self, llm_config: LLMConfig):
+    def __init__(self, llm_config: LLMConfig, user_api_key: Optional[str] = None, user_base_url: Optional[str] = None):
         self.llm_config = llm_config
+        self.user_api_key = user_api_key
+        self.user_base_url = user_base_url
 
     def _get_client(self) -> AsyncOpenAI:
-        """根据 provider 获取对应的 OpenAI 兼容客户端"""
-        if self.llm_config.provider == "dashscope":
+        """根据 provider 获取对应的 OpenAI 兼容客户端，优先使用用户配置的 API Key 和 Base URL"""
+        # 如果用户配置了自定义 base_url，直接使用（适配中转站）
+        if self.user_base_url:
             return AsyncOpenAI(
-                api_key=settings.DASHSCOPE_API_KEY,
+                api_key=self.user_api_key or settings.OPENAI_API_KEY,
+                base_url=self.user_base_url,
+            )
+
+        if self.llm_config.provider == "dashscope":
+            api_key = self.user_api_key or settings.DASHSCOPE_API_KEY
+            return AsyncOpenAI(
+                api_key=api_key,
                 base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
             )
-        else:
+        elif self.llm_config.provider == "anthropic":
+            api_key = self.user_api_key or settings.ANTHROPIC_API_KEY
             return AsyncOpenAI(
-                api_key=settings.OPENAI_API_KEY,
+                api_key=api_key,
+                base_url="https://api.anthropic.com/v1",
+            )
+        else:
+            api_key = self.user_api_key or settings.OPENAI_API_KEY
+            return AsyncOpenAI(
+                api_key=api_key,
                 base_url=settings.OPENAI_BASE_URL,
             )
 

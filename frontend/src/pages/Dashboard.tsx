@@ -76,7 +76,6 @@ export default function Dashboard({ onFundDetail }: DashboardProps) {
             </div>
             <span className="font-semibold text-stone-800 text-lg tracking-tight">FundAdvisor</span>
           </div>
-          <ModelSelector selected={selectedModel} onChange={setSelectedModel} />
         </div>
       </header>
 
@@ -95,7 +94,8 @@ export default function Dashboard({ onFundDetail }: DashboardProps) {
           <div className="flex items-stretch gap-3">
             <FundSearch onSelect={setSelectedFund} selectedFund={selectedFund} onClear={() => { setSelectedFund(null); setNavHistory([]); setReport(null); }} />
             {selectedFund && (
-              <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }} className="flex gap-2">
+              <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }} className="flex gap-2 items-center">
+                <ModelSelector selected={selectedModel} onChange={setSelectedModel} />
                 <button
                   onClick={handleAnalyze}
                   disabled={analyzing}
