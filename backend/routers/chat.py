@@ -9,7 +9,7 @@ from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
-from models.db_models import User, ChatMessage
+from models.db_models import User, ChatMessage, UserApiKey
 from routers.auth import get_current_user_dep
 from config import LLMConfig
 from agents.assistant_agent import AssistantAgent
@@ -72,7 +72,20 @@ async def chat_stream(
         max_tokens=2048,
     )
 
-    agent = AssistantAgent(llm_config=llm_config)
+    # 查询用户配置的 API Key（优先使用用户自己的）
+    user_api_key = None
+    user_base_url = None
+    key_result = await db.execute(
+        select(UserApiKey)
+        .where(UserApiKey.user_id == user.id, UserApiKey.provider == req.model_provider)
+        .limit(1)
+    )
+    user_key_record = key_result.scalar_one_or_none()
+    if user_key_record:
+        user_api_key = user_key_record.api_key
+        user_base_url = user_key_record.base_url or None
+
+    agent = AssistantAgent(llm_config=llm_config, user_api_key=user_api_key, user_base_url=user_base_url)
 
     async def event_generator():
         full_response = ""

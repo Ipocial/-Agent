@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import ChatMessage from './ChatMessage';
 import { streamChat, getChatHistory, clearChatHistory, getUsername, logout } from '../services/auth';
+import type { LLMModel } from '../types';
+import { AVAILABLE_MODELS } from '../types';
 
 interface Message {
   id: string;
@@ -25,6 +27,7 @@ export default function ChatPanel({ onClose, onLogout }: Props) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<LLMModel>(AVAILABLE_MODELS[0]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const username = getUsername();
 
@@ -71,7 +74,7 @@ export default function ChatPanel({ onClose, onLogout }: Props) {
     setMessages((prev) => [...prev, { id: assistantId, role: 'assistant', content: '' }]);
 
     try {
-      for await (const event of streamChat(text)) {
+      for await (const event of streamChat(text, selectedModel.provider, selectedModel.name)) {
         if (event.type === 'tool_call') {
           const toolId = `tool-${Date.now()}-${event.tool}`;
           setMessages((prev) => [
@@ -199,6 +202,24 @@ export default function ChatPanel({ onClose, onLogout }: Props) {
 
       {/* Input */}
       <div className="px-3 py-3 border-t border-stone-100 shrink-0">
+        <div className="flex items-center gap-1.5 mb-2">
+          <svg className="w-3 h-3 text-brand-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L14.09 8.26L20 9.27L15.55 13.97L16.91 20L12 16.9L7.09 20L8.45 13.97L4 9.27L9.91 8.26L12 2Z" />
+          </svg>
+          <select
+            value={`${selectedModel.provider}:${selectedModel.name}`}
+            onChange={(e) => {
+              const [provider, name] = e.target.value.split(':');
+              const model = AVAILABLE_MODELS.find(m => m.provider === provider && m.name === name);
+              if (model) setSelectedModel(model);
+            }}
+            className="appearance-none bg-transparent text-[11px] text-stone-500 font-medium outline-none cursor-pointer hover:text-brand-600 transition-smooth pr-4"
+          >
+            {AVAILABLE_MODELS.map((model) => (
+              <option key={`${model.provider}:${model.name}`} value={`${model.provider}:${model.name}`}>{model.label}</option>
+            ))}
+          </select>
+        </div>
         <div className="flex items-end gap-2">
           <textarea
             value={input}

@@ -4,9 +4,11 @@ import { login, register } from '../services/auth';
 interface Props {
   onSuccess: (username: string) => void;
   onClose: () => void;
+  /** 当为入口级登录时不允许关闭 */
+  dismissible?: boolean;
 }
 
-export default function AuthModal({ onSuccess, onClose }: Props) {
+export default function AuthModal({ onSuccess, onClose, dismissible = true }: Props) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -36,11 +38,13 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
           <h2 className="text-lg font-semibold text-stone-800">
             {mode === 'login' ? '登录' : '注册'}
           </h2>
-          <button onClick={onClose} className="p-1 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-smooth">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          {dismissible && (
+            <button onClick={onClose} className="p-1 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-smooth">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Form */}

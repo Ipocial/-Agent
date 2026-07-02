@@ -29,5 +29,5 @@ async def get_db():
 async def init_db():
     """初始化数据库表"""
     async with engine.begin() as conn:
-        from models.db_models import User, Portfolio, ChatMessage  # noqa
+        from models.db_models import User, Portfolio, ChatMessage, UserApiKey  # noqa
         await conn.run_sync(Base.metadata.create_all)

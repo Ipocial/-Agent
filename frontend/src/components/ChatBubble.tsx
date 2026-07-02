@@ -1,38 +1,19 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { isLoggedIn } from '../services/auth';
-import AuthModal from './AuthModal';
 import ChatPanel from './ChatPanel';
 
-export default function ChatBubble() {
+interface Props {
+  onLogout: () => void;
+}
+
+export default function ChatBubble({ onLogout }: Props) {
   const [open, setOpen] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(isLoggedIn());
-
-  const handleBubbleClick = () => {
-    if (!loggedIn) {
-      setShowAuth(true);
-    } else {
-      setOpen(!open);
-    }
-  };
-
-  const handleAuthSuccess = () => {
-    setLoggedIn(true);
-    setShowAuth(false);
-    setOpen(true);
-  };
-
-  const handleLogout = () => {
-    setLoggedIn(false);
-    setOpen(false);
-  };
 
   return (
     <>
       {/* Floating bubble button */}
       <motion.button
-        onClick={handleBubbleClick}
+        onClick={() => setOpen(!open)}
         className="fixed bottom-6 right-6 z-[90] w-14 h-14 rounded-full bg-brand-600 text-white shadow-lg hover:bg-brand-700 flex items-center justify-center transition-smooth"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -50,7 +31,7 @@ export default function ChatBubble() {
 
       {/* Chat panel */}
       <AnimatePresence>
-        {open && loggedIn && (
+        {open && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -58,15 +39,10 @@ export default function ChatBubble() {
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="fixed bottom-24 right-6 z-[90] w-[380px] h-[560px] bg-white rounded-2xl shadow-lg border border-stone-100 overflow-hidden flex flex-col"
           >
-            <ChatPanel onClose={() => setOpen(false)} onLogout={handleLogout} />
+            <ChatPanel onClose={() => setOpen(false)} onLogout={onLogout} />
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Auth modal */}
-      {showAuth && (
-        <AuthModal onSuccess={handleAuthSuccess} onClose={() => setShowAuth(false)} />
-      )}
     </>
   );
 }
