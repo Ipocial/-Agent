@@ -36,7 +36,10 @@ class Settings:
     DECISION_AGENT_LLM: LLMConfig = LLMConfig(provider="openai", model="gpt-4o")
 
     # 服务配置
-    CORS_ORIGINS: list = ["http://localhost:5173", "http://localhost:3000"]
+    CORS_ORIGINS: list = ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"]
+
+    # JWT
+    JWT_SECRET: str = os.getenv("JWT_SECRET", "fund-advisor-secret-key-change-in-production")
 
 
 settings = Settings()
