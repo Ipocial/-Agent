@@ -1,6 +1,7 @@
 """ORM 数据模型"""
 from datetime import datetime, date
-from sqlalchemy import String, Integer, Float, Text, DateTime, Date, ForeignKey
+from typing import Optional
+from sqlalchemy import String, Integer, Float, Text, DateTime, Date, Boolean, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
@@ -18,6 +19,8 @@ class User(Base):
     portfolios: Mapped[list["Portfolio"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     messages: Mapped[list["ChatMessage"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     api_keys: Mapped[list["UserApiKey"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    dca_plans: Mapped[list["DcaPlan"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    price_alerts: Mapped[list["PriceAlert"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 
 class UserApiKey(Base):
@@ -62,3 +65,39 @@ class ChatMessage(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     user: Mapped["User"] = relationship(back_populates="messages")
+
+
+class DcaPlan(Base):
+    """定投计划"""
+    __tablename__ = "dca_plans"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    fund_code: Mapped[str] = mapped_column(String(10), nullable=False)
+    fund_name: Mapped[str] = mapped_column(String(100), default="")
+    monthly_amount: Mapped[float] = mapped_column(Float, nullable=False)   # 每月定投金额（元）
+    day_of_month: Mapped[int] = mapped_column(Integer, nullable=False)     # 每月几号（1-28）
+    start_date: Mapped[date] = mapped_column(Date, nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    note: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    user: Mapped["User"] = relationship(back_populates="dca_plans")
+
+
+class PriceAlert(Base):
+    """止盈止损提醒"""
+    __tablename__ = "price_alerts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    fund_code: Mapped[str] = mapped_column(String(10), nullable=False)
+    fund_name: Mapped[str] = mapped_column(String(100), default="")
+    alert_type: Mapped[str] = mapped_column(String(10), nullable=False)    # "profit" | "loss"
+    target_pct: Mapped[float] = mapped_column(Float, nullable=False)       # 目标涨跌幅（%）
+    cost_price: Mapped[float] = mapped_column(Float, nullable=False)       # 建仓成本价
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    triggered_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    user: Mapped["User"] = relationship(back_populates="price_alerts")

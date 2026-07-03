@@ -293,5 +293,131 @@ class FundService:
         results = await asyncio.gather(*tasks, return_exceptions=True)
         return [r for r in results if isinstance(r, dict)]
 
+    async def get_market_indices(self) -> list:
+        """获取三大指数实时行情（上证/深成/创业板）"""
+        url = "https://push2.eastmoney.com/api/qt/ulist.np/get"
+        params = {
+            "fltt": "2",
+            "invt": "2",
+            "fields": "f2,f3,f4,f14",
+            "secids": "1.000001,0.399001,0.399006",
+        }
+        index_codes = {
+            "000001": "上证指数",
+            "399001": "深证成指",
+            "399006": "创业板指",
+        }
+        async with httpx.AsyncClient() as client:
+            try:
+                resp = await client.get(url, params=params, headers=self.headers, timeout=10)
+                data = resp.json()
+                items = data.get("data", {}).get("diff", {})
+                result = []
+                # diff may be dict keyed by index or list
+                if isinstance(items, dict):
+                    items = list(items.values())
+                for item in items:
+                    name = item.get("f14", "")
+                    price = item.get("f2", 0)
+                    change_pct = item.get("f3", 0)
+                    change_val = item.get("f4", 0)
+                    # Guess code from name
+                    code = ""
+                    for k, v in index_codes.items():
+                        if v == name:
+                            code = k
+                            break
+                    result.append({
+                        "name": name,
+                        "code": code,
+                        "price": price,
+                        "change_pct": change_pct,
+                        "change_val": change_val,
+                    })
+                return result
+            except Exception as e:
+                print(f"获取大盘指数失败: {e}")
+                return []
+
+    async def get_technical_signals(self, fund_code: str) -> dict:
+        """计算基金技术指标信号（MA5/MA20/MA60、RSI14、金叉死叉）"""
+        nav_history = await self.get_fund_nav_history(fund_code, days=120)
+
+        if len(nav_history) < 21:
+            return {
+                "ma5": None, "ma20": None, "ma60": None, "rsi": None,
+                "signal": "neutral", "signal_desc": "历史数据不足，无法计算技术指标",
+                "nav_history": [],
+            }
+
+        navs = [n.nav for n in nav_history]
+        n = len(navs)
+
+        def ma(period: int, offset: int = 0) -> float:
+            """计算从末尾往前 offset 处开始的 period 日均值"""
+            end = n - offset
+            start = end - period
+            if start < 0:
+                return 0.0
+            return sum(navs[start:end]) / period
+
+        ma5_now = ma(5, 0)
+        ma20_now = ma(20, 0)
+        ma60_now = ma(60, 0) if n >= 60 else None
+        ma5_prev = ma(5, 3)   # 3日前的 MA5
+        ma20_prev = ma(20, 3) # 3日前的 MA20
+
+        # RSI(14)
+        daily_returns = [n.daily_return for n in nav_history]
+        rsi_returns = [r for r in daily_returns[-15:] if r != 0]
+        if len(rsi_returns) >= 2:
+            gains = [r for r in rsi_returns if r > 0]
+            losses = [-r for r in rsi_returns if r < 0]
+            avg_gain = sum(gains) / 14 if gains else 0
+            avg_loss = sum(losses) / 14 if losses else 0
+            if avg_loss == 0:
+                rsi = 100.0
+            else:
+                rs = avg_gain / avg_loss
+                rsi = round(100 - 100 / (1 + rs), 2)
+        else:
+            rsi = None
+
+        # 判断金叉/死叉
+        signal = "neutral"
+        signal_desc = "均线趋势平稳，暂无明显买卖信号"
+        if ma5_now and ma20_now and ma5_prev and ma20_prev:
+            golden = ma5_now > ma20_now and ma5_prev <= ma20_prev
+            death = ma5_now < ma20_now and ma5_prev >= ma20_prev
+            if golden:
+                signal = "bullish"
+                signal_desc = "近期出现金叉：MA5 上穿 MA20，短期动能转强，可关注买入机会"
+            elif death:
+                signal = "bearish"
+                signal_desc = "近期出现死叉：MA5 下穿 MA20，短期动能减弱，建议谨慎观望"
+            elif ma5_now > ma20_now:
+                signal = "bullish"
+                signal_desc = "MA5 持续在 MA20 之上，短期趋势向上"
+            elif ma5_now < ma20_now:
+                signal = "bearish"
+                signal_desc = "MA5 持续在 MA20 之下，短期趋势偏弱"
+
+        # RSI 覆盖信号
+        if rsi is not None:
+            if rsi > 70:
+                signal_desc += f"；RSI({rsi:.1f}) 超买区间，短期注意回调风险"
+            elif rsi < 30:
+                signal_desc += f"；RSI({rsi:.1f}) 超卖区间，可能存在反弹机会"
+
+        return {
+            "ma5": round(ma5_now, 4) if ma5_now else None,
+            "ma20": round(ma20_now, 4) if ma20_now else None,
+            "ma60": round(ma60_now, 4) if ma60_now else None,
+            "rsi": rsi,
+            "signal": signal,
+            "signal_desc": signal_desc,
+            "nav_history": [{"date": n.date, "nav": n.nav} for n in nav_history[-60:]],
+        }
+
 
 fund_service = FundService()

@@ -113,3 +113,66 @@ export interface RecommendParams {
   model_provider: string;
   model_name: string;
 }
+
+// ============ 跟踪 / 提醒类型 ============
+
+export interface MarketIndex {
+  name: string;
+  code: string;
+  price: number;
+  change_pct: number;
+  change_val: number;
+}
+
+export interface TechnicalSignal {
+  ma5: number | null;
+  ma20: number | null;
+  ma60: number | null;
+  rsi: number | null;
+  signal: 'bullish' | 'bearish' | 'neutral';
+  signal_desc: string;
+  nav_history: Array<{ date: string; nav: number }>;
+}
+
+export interface DcaPlan {
+  id: number;
+  fund_code: string;
+  fund_name: string;
+  monthly_amount: number;
+  day_of_month: number;
+  start_date: string;
+  active: boolean;
+  note: string;
+  created_at: string;
+}
+
+export interface DcaSimulateResult {
+  fund_code: string;
+  fund_name: string;
+  total_invested: number;
+  current_value: number;
+  total_shares: number;
+  total_return: number;
+  total_return_pct: number;
+  latest_nav: number;
+  invest_count: number;
+  monthly_records: Array<{ date: string; nav: number; shares: number; invested: number }>;
+}
+
+export interface PriceAlert {
+  id: number;
+  fund_code: string;
+  fund_name: string;
+  alert_type: 'profit' | 'loss';
+  target_pct: number;
+  cost_price: number;
+  active: boolean;
+  triggered_at: string | null;
+  created_at: string;
+}
+
+export interface TriggeredAlert {
+  alert: PriceAlert;
+  current_pct: number;
+  current_nav: number;
+}

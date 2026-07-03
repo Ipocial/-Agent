@@ -1,6 +1,6 @@
 // API 调用封装
 import axios from 'axios';
-import type { FundInfo, FundNAV, NewsItem, AnalysisRequest, FinalReport, AgentProgress, FundRankItem, FundCompareItem, RecommendParams } from '../types';
+import type { FundInfo, FundNAV, NewsItem, AnalysisRequest, FinalReport, AgentProgress, FundRankItem, FundCompareItem, RecommendParams, MarketIndex, TechnicalSignal, DcaPlan, DcaSimulateResult, PriceAlert, TriggeredAlert } from '../types';
 import { getToken, clearAuth } from './auth';
 
 const api = axios.create({
@@ -152,4 +152,84 @@ export async function* streamRecommend(params: RecommendParams): AsyncGenerator<
       }
     }
   }
+}
+
+// ============ 跟踪提醒 API ============
+
+export async function getMarketIndices(): Promise<MarketIndex[]> {
+  const { data } = await api.get('/tracking/market');
+  return data.indices;
+}
+
+export async function getSignals(fundCode: string): Promise<TechnicalSignal> {
+  const { data } = await api.get(`/tracking/signals/${fundCode}`);
+  return data;
+}
+
+export async function getDcaPlans(): Promise<DcaPlan[]> {
+  const token = getToken();
+  const { data } = await axios.get('/api/tracking/dca-plans', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+export async function createDcaPlan(params: {
+  fund_code: string; fund_name?: string; monthly_amount: number;
+  day_of_month: number; start_date: string; note?: string;
+}): Promise<DcaPlan> {
+  const token = getToken();
+  const { data } = await axios.post('/api/tracking/dca-plans', params, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+export async function deleteDcaPlan(id: number): Promise<void> {
+  const token = getToken();
+  await axios.delete(`/api/tracking/dca-plans/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function simulateDca(id: number): Promise<DcaSimulateResult> {
+  const token = getToken();
+  const { data } = await axios.get(`/api/tracking/dca-plans/${id}/simulate`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+export async function getAlerts(): Promise<PriceAlert[]> {
+  const token = getToken();
+  const { data } = await axios.get('/api/tracking/alerts', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+export async function createAlert(params: {
+  fund_code: string; fund_name?: string; alert_type: 'profit' | 'loss';
+  target_pct: number; cost_price: number;
+}): Promise<PriceAlert> {
+  const token = getToken();
+  const { data } = await axios.post('/api/tracking/alerts', params, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+export async function deleteAlert(id: number): Promise<void> {
+  const token = getToken();
+  await axios.delete(`/api/tracking/alerts/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function checkAlerts(): Promise<{ triggered: TriggeredAlert[] }> {
+  const token = getToken();
+  const { data } = await axios.get('/api/tracking/check-alerts', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
 }

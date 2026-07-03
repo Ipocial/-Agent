@@ -3,12 +3,13 @@ import Dashboard from './pages/Dashboard';
 import FundDetail from './pages/FundDetail';
 import ProfilePage from './pages/ProfilePage';
 import DiscoverPage from './pages/DiscoverPage';
+import TrackingPage from './pages/TrackingPage';
 import ChatBubble from './components/ChatBubble';
 import AuthModal from './components/AuthModal';
 import { isLoggedIn, logout as doLogout, getUsername } from './services/auth';
 import type { FundInfo } from './types';
 
-type Page = 'dashboard' | 'fund-detail' | 'profile' | 'discover';
+type Page = 'dashboard' | 'fund-detail' | 'profile' | 'discover' | 'tracking';
 
 function App() {
   const [page, setPage] = useState<Page>('dashboard');
@@ -57,19 +58,20 @@ function App() {
   return (
     <>
       {/* 顶部固定导航区 */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[80] flex items-center gap-2 px-1.5 py-1 bg-white/90 backdrop-blur border border-stone-200 rounded-full shadow-sm">
-        <button
-          onClick={() => setPage('dashboard')}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${page === 'dashboard' ? 'bg-stone-800 text-white' : 'text-stone-600 hover:bg-stone-100'}`}
-        >
-          分析
-        </button>
-        <button
-          onClick={() => setPage('discover')}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${page === 'discover' ? 'bg-stone-800 text-white' : 'text-stone-600 hover:bg-stone-100'}`}
-        >
-          发现
-        </button>
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[80] flex items-center gap-1 px-1.5 py-1 bg-white/90 backdrop-blur border border-stone-200 rounded-full shadow-sm">
+        {([
+          { key: 'dashboard', label: '分析' },
+          { key: 'discover', label: '发现' },
+          { key: 'tracking', label: '跟踪' },
+        ] as { key: Page; label: string }[]).map((item) => (
+          <button
+            key={item.key}
+            onClick={() => setPage(item.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${page === item.key ? 'bg-stone-800 text-white' : 'text-stone-600 hover:bg-stone-100'}`}
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
 
       {/* 右上角"我的"入口 */}
@@ -110,6 +112,9 @@ function App() {
           compareList={compareList}
           onAddCompare={handleAddCompare}
         />
+      )}
+      {page === 'tracking' && (
+        <TrackingPage onFundDetail={handleFundDetail} />
       )}
 
       {/* 聊天气泡 */}
