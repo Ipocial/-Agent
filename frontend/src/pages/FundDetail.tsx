@@ -11,9 +11,11 @@ import ModelSelector from '../components/ModelSelector';
 interface Props {
   fundCode: string;
   onBack?: () => void;
+  compareList?: import('../types').FundInfo[];
+  onAddCompare?: (fund: import('../types').FundInfo) => void;
 }
 
-export default function FundDetail({ fundCode, onBack }: Props) {
+export default function FundDetail({ fundCode, onBack, compareList = [], onAddCompare }: Props) {
   const [fundInfo, setFundInfo] = useState<FundInfo | null>(null);
   const [navHistory, setNavHistory] = useState<FundNAV[]>([]);
   const [selectedModel, setSelectedModel] = useState<LLMModel>(AVAILABLE_MODELS[0]);
@@ -104,6 +106,21 @@ export default function FundDetail({ fundCode, onBack }: Props) {
                 </span>
               ) : '启动 AI 分析'}
             </button>
+            {onAddCompare && fundInfo && (
+              <button
+                onClick={() => onAddCompare(fundInfo)}
+                disabled={compareList.some((f) => f.code === fundCode) || compareList.length >= 3}
+                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-smooth ${
+                  compareList.some((f) => f.code === fundCode)
+                    ? 'text-stone-300 border-stone-200 cursor-default'
+                    : compareList.length >= 3
+                    ? 'text-stone-300 border-stone-200 cursor-not-allowed'
+                    : 'text-stone-600 border-stone-200 hover:bg-stone-50'
+                }`}
+              >
+                {compareList.some((f) => f.code === fundCode) ? '已加入对比' : '加入对比'}
+              </button>
+            )}
           </div>
         </div>
       </header>

@@ -71,3 +71,45 @@ export const AVAILABLE_MODELS: LLMModel[] = [
   { provider: 'dashscope', name: 'qwen-max', label: '通义千问 Max' },
   { provider: 'dashscope', name: 'qwen-plus', label: '通义千问 Plus' },
 ];
+
+// ============ 发现 / 排行榜类型 ============
+
+export interface FundRankItem {
+  rank: number;
+  code: string;
+  name: string;
+  nav: string;
+  acc_nav: string;
+  daily_return: string;
+  return_1w: string;
+  return_1m: string;
+  return_3m: string;
+  return_6m: string;
+  return_1y: string;
+  return_3y: string;
+  return_ytd: string;
+}
+
+export interface FundCompareItem {
+  code: string;
+  name: string;
+  manager: string;
+  nav_history: Array<{ date: string; nav: number; acc_nav: number }>;
+  metrics: {
+    volatility: number;
+    max_drawdown: number;
+    sharpe: number;
+    return_1m: string;
+    return_3m: string;
+    return_6m: string;
+    return_1y: string;
+  };
+}
+
+export interface RecommendParams {
+  risk_level: number;
+  amount: number;
+  period_years: number;
+  model_provider: string;
+  model_name: string;
+}

@@ -12,9 +12,11 @@ import ModelSelector from '../components/ModelSelector';
 
 interface DashboardProps {
   onFundDetail?: (code: string) => void;
+  compareList?: import('../types').FundInfo[];
+  onAddCompare?: (fund: import('../types').FundInfo) => void;
 }
 
-export default function Dashboard({ onFundDetail }: DashboardProps) {
+export default function Dashboard({ onFundDetail, compareList = [], onAddCompare }: DashboardProps) {
   const [selectedFund, setSelectedFund] = useState<FundInfo | null>(null);
   const [navHistory, setNavHistory] = useState<FundNAV[]>([]);
   const [selectedModel, setSelectedModel] = useState<LLMModel>(AVAILABLE_MODELS[0]);
@@ -115,6 +117,21 @@ export default function Dashboard({ onFundDetail }: DashboardProps) {
                     className="px-5 py-2.5 rounded-lg text-sm font-medium text-stone-600 border border-stone-200 hover:bg-stone-50 hover:border-stone-300 transition-smooth whitespace-nowrap"
                   >
                     查看详情
+                  </button>
+                )}
+                {onAddCompare && (
+                  <button
+                    onClick={() => onAddCompare(selectedFund)}
+                    disabled={compareList.some((f) => f.code === selectedFund.code) || compareList.length >= 3}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-medium border transition-smooth whitespace-nowrap ${
+                      compareList.some((f) => f.code === selectedFund.code)
+                        ? 'text-stone-300 border-stone-200 cursor-default'
+                        : compareList.length >= 3
+                        ? 'text-stone-300 border-stone-200 cursor-not-allowed'
+                        : 'text-stone-600 border-stone-200 hover:bg-stone-50'
+                    }`}
+                  >
+                    {compareList.some((f) => f.code === selectedFund.code) ? '已加入对比' : '加入对比'}
                   </button>
                 )}
               </motion.div>
