@@ -1,6 +1,7 @@
 // API 调用封装
 import axios from 'axios';
-import type { FundInfo, FundNAV, NewsItem, AnalysisRequest, FinalReport, AgentProgress } from '../types';
+import type { FundInfo, FundNAV, NewsItem, AnalysisRequest, FinalReport, AgentProgress, FundRankItem, FundCompareItem, RecommendParams } from '../types';
+import { getToken, clearAuth } from './auth';
 
 const api = axios.create({
   baseURL: '/api',
@@ -83,4 +84,72 @@ export function createAnalysisWebSocket(
   };
 
   return ws;
+}
+
+// ============ 发现 API ============
+
+export async function getRanking(ft = 'all', sc = 'zzf', pn = 20): Promise<FundRankItem[]> {
+  const { data } = await api.get('/discover/ranking', { params: { ft, sc, pn } });
+  return data.funds;
+}
+
+export async function filterFunds(params: {
+  ft?: string;
+  sc?: string;
+  min_return_1y?: number;
+  sort_by?: string;
+  pn?: number;
+}): Promise<FundRankItem[]> {
+  const { data } = await api.get('/discover/filter', { params });
+  return data.funds;
+}
+
+export async function compareFunds(codes: string[]): Promise<FundCompareItem[]> {
+  const { data } = await api.get('/discover/compare', { params: { codes: codes.join(',') } });
+  return data.funds;
+}
+
+export async function* streamRecommend(params: RecommendParams): AsyncGenerator<{ type: string; content?: string }> {
+  const token = getToken();
+  const response = await fetch('/api/discover/recommend', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearAuth();
+      throw new Error('认证已过期，请重新登录');
+    }
+    throw new Error(`请求失败: ${response.status}`);
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('无法读取响应流');
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try {
+          yield JSON.parse(line.slice(6));
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }
 }

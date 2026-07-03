@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
 from routers import fund, analysis, news
-from routers import auth, portfolio, chat, profile
+from routers import auth, portfolio, chat, profile, discover
 from database import init_db
 
 
@@ -40,6 +40,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["用户认证"])
 app.include_router(portfolio.router, prefix="/api/portfolio", tags=["持仓管理"])
 app.include_router(chat.router, prefix="/api/chat", tags=["智能助理"])
 app.include_router(profile.router, prefix="/api/profile", tags=["个人信息"])
+app.include_router(discover.router, prefix="/api/discover", tags=["发现基金"])
 
 
 @app.get("/")
